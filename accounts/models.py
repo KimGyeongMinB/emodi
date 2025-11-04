@@ -36,3 +36,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['nickname']  # createsuperuser 시 추가로 받을 필드 목록(['nickname'])
 
     objects = UserManager()
+
+    # 활성화 모델 메서드
+    def activate(self):
+        if self.is_active:
+            return False
+        
+        self.is_active = True
+        self.save(update_fields=['is_active'])
+
+        return self.is_active
