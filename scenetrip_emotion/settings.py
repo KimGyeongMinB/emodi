@@ -84,6 +84,8 @@ DATABASES = {
     }
 }
 
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
 REST_FRAMEWORK = {
     # 기본 인증 방식
     'DEFAULT_AUTHENTICATION_CLASSES': [

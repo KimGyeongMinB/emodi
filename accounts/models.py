@@ -4,11 +4,11 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 
 # 유저 생성 매니저
 class UserManager(BaseUserManager):
-    def create_user(self, email, password=None,  **extra_fields):
+    def create_user(self, email, password=None,  nickname=None, **extra_fields):
         if not email:
             raise ValueError("이메일을 입력해주세요.")
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(email=email, nickname=nickname, **extra_fields)
 
         # 비밀번호 해시
         user.set_password(password)
