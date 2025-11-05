@@ -1,5 +1,5 @@
 from django.core.mail import EmailMessage
-from accounts.emails.code_caches import save_code
+from accounts.emails.signup_caches import save_code
 
 def send_email(email: str, code: str, subject: str = "이메일 인증"):
     mail = EmailMessage(subject=subject, body=code, to=[email])

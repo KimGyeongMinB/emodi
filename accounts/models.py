@@ -46,3 +46,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         self.save(update_fields=['is_active'])
 
         return self.is_active
+    
+    def new_set_password(self, new_password: str):
+        """
+        비밀번호 재설정
+        """
+        self.set_password(new_password)
+        self.save(update_fields=['password'])
+
+        return self.password

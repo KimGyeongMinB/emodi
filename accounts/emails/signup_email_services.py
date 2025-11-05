@@ -1,6 +1,6 @@
-from accounts.emails.code_helpers import email_helper
-from accounts.emails.send_helpers import send_email
-from accounts.emails.code_caches import get_code
+from accounts.emails.signup_code_helpers import email_helper
+from accounts.emails.signup_send_helpers import send_email
+from accounts.emails.signup_caches import get_code
 
 class EmailVerificationService:
 
