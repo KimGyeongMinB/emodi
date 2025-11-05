@@ -2,9 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 import re
 from accounts.password.new_passwords import NewCreatePassword
-
-from accounts.password.caches import clear_code, verify_code
-
+from accounts.utils.caches import password_clear_code, password_verify_code, signup_verify_code, signup_clear_code
 class SignUpSerializers(serializers.ModelSerializer):
     """
     회원가입 시리얼 라이저
@@ -14,25 +12,24 @@ class SignUpSerializers(serializers.ModelSerializer):
         model = get_user_model()
         fields = ["email", "password", "nickname"]
 
+    # 비밀번호 검증
     def validate_password(self, value):
         pattern = r'[!@#$%^&*(),.?":{}|<>]'
-
         if len(value) < 8:
             raise serializers.ValidationError("password가 8자 미만입니다.")
-        
         if not re.search(pattern, value):
             raise serializers.ValidationError("특수문자를 포함시켜 주십시오. ex) abcd123@")
         
         return value
 
+    # 닉네임 검증
     def validate_nickname(self, value):
         pattern = r'[!@#$%^&*(),.?":{}|<>]'
         if len(value) < 3:
             raise serializers.ValidationError('닉네임은 3자이상입니다')
-        
         if re.search(pattern, value):
             raise serializers.ValidationError('닉네임에는 특수문자가 들어갈수 없습니다.')
-
+        
         return value
     
     # 유저 생성 함수
@@ -42,8 +39,41 @@ class SignUpSerializers(serializers.ModelSerializer):
             password=validated_data['password'],
             email=validated_data['email']
         )
-
         return user
+
+
+# 회원가입 시 이메일 코드 인증 시리얼 라이저
+class SignupEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField()
+
+    # 이메일 검증
+    def validate_email(self, value):
+        User = get_user_model()
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("가입된 email이 아닙니다.")
+        
+        return value
+
+    # 이메일/인증 코드 동시 검증
+    def validate(self, attrs):
+        email = attrs["email"]
+        code = attrs["code"]
+        if not signup_verify_code(email, code):
+            raise serializers.ValidationError("인증번호가 틀렸거나 만료되었습니다.")
+        signup_clear_code(email)
+        return attrs
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    # 이메일 검사하는 함수
+    def validate_email(self, value):
+        User = get_user_model()
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("가입된 email이 아닙니다.")
+        
+        return value
 
 class ResetVerifySerializer(serializers.Serializer):
     """
@@ -59,15 +89,16 @@ class ResetVerifySerializer(serializers.Serializer):
         User = get_user_model()
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("가입된 email이 아닙니다.")
+        
         return value
     
     # 이메일과 코드 캐시에 저장된 코드와 일치한지 확인하는 함수
     def validate(self, attrs):
         email = attrs["email"]
         code = attrs["code"]
-
-        if not verify_code(email, code):
+        if not password_verify_code(email, code):
             raise serializers.ValidationError("인증번호가 틀렸거나 만료되었습니다.")
+        
         return attrs
     
     # 새 비밀번호 생성 함수
@@ -77,5 +108,6 @@ class ResetVerifySerializer(serializers.Serializer):
         email = validated_data["email"]
         new_password=validated_data['new_password']
         user = NewCreatePassword.create_new_password(email, new_password)
-        clear_code(email)
+        password_clear_code(email)
+
         return user

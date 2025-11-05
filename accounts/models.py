@@ -24,17 +24,22 @@ class UserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
 
+    # 입력해야하는 필드
     nickname = models.CharField(max_length=15)
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=20)
 
+    # 비 입력 필드
     date_join = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
+    # 로그인 시 이름 대신 이메일로 인증
+    # 슈퍼계정 만들때 닉네임 추가로 받음
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['nickname']  # createsuperuser 시 추가로 받을 필드 목록(['nickname'])
+    REQUIRED_FIELDS = ['nickname']
 
+    # 유저 매니저 클래스 연결
     objects = UserManager()
 
     # 활성화 모델 메서드
@@ -47,6 +52,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
         return self.is_active
     
+    # 비밀번호 재설정 모델 메서드
     def new_set_password(self, new_password: str):
         """
         비밀번호 재설정

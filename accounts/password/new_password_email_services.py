@@ -1,6 +1,6 @@
 from accounts.password.new_password_code_helpers import reset_password
 from accounts.password.new_password_send_helpers import send_email
-from accounts.password.caches import get_code
+from accounts.utils.caches import password_get_code
 
 class PasswordVerificationService:
     """
@@ -15,4 +15,4 @@ class PasswordVerificationService:
     def password_email_service(email: str):
         code = reset_password.reset_password_code()
         send_email(email, code, subject="패스워드 찾기 이메일 인증 코드")
-        return get_code(email)
+        return password_get_code(email)
