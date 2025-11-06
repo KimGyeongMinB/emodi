@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # app
-    'accounts'
+    'accounts',
+    'posts'
 ]
 
 MIDDLEWARE = [
@@ -110,6 +111,9 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
+
+    'DEFAULT_PAGINATION_CLASS': 'paginations.paginations.StandardResultsSetPagination',
+
 }
 
 # Password validation
