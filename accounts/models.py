@@ -31,7 +31,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     # 비 입력 필드
     date_join = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
 
     # 로그인 시 이름 대신 이메일로 인증

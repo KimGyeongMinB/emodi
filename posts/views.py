@@ -10,10 +10,7 @@ from paginations.paginations import StandardResultsSetPagination
 
 # 할거
 """
-1. 수정(완료)
-2. 삭제(완료)
-3. 글 상세페이지(완료)
-3. 페이지네이션(완료)
+1. 조회수
 """
 
 # 문의/공지사항 전체 리스트
@@ -27,13 +24,34 @@ class PostListView(APIView):
         페이지네이션 PageNumberPagination 부모클래스 안의 함수 paginate_queryset
         (self, queryset, request, view=None) 에서 self 는 StandardResultsSetPagination().
         """
-        posts = Post.objects.all().order_by('-created_at')
+        # 정렬기준(최신순 기준)
+        sort = request.query_params.get("sort", "created")
+
+        if sort == "today_view":
+            posts = Post.objects.with_today_view_count().order_by('-view_count')
+        else:
+            posts = Post.objects.with_view_count().order_by('-created_at')
+
         page_qs = StandardResultsSetPagination().paginate_queryset(posts, request, view=self)
 
         serializer = PostSerializer(page_qs, many=True)
         if serializer:
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PostDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, post_id):
+        # 1) 글 가져오기
+        post = get_object_or_404(Post, id=post_id)
+
+        # 2) 조회수 +1 하고, 합계 view_count 붙은 Post 반환
+        post_with_count = post.get_increment(request.user)
+
+        # 3) 직렬화/응답
+        serializer = PostSerializer(post_with_count, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 # 문의/공지사항 생성
 class PostCreateView(APIView):
@@ -49,19 +67,8 @@ class PostCreateView(APIView):
 
 # 문의/공지사항 상세페이지 뷰
 # 상세페이지 불러오기/수정(글쓴이만)
-class PostDetailView(APIView):
+class PostpatchView(APIView):
     permission_classes = [IsAuthenticated]
-
-    def get(self, request, post_id):
-        """
-        글 상세페이지 불러오기
-        """
-        post = get_object_or_404(Post, id=post_id)
-        if not post:
-            return Response({"Not Found" : "글을 찾을수 없습니다"}, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = PostSerializer(post)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def patch(self, request, post_id):
         """

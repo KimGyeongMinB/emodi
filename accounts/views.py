@@ -24,7 +24,6 @@ class SignUpView(APIView):
         if serializer.is_valid():
             try:
                 user = serializer.save()
-                user.activate
                 user.save()
                 signup_email_code = EmailVerificationService.email_service(user.email)
                 return Response({"signup_email_code" : signup_email_code}, status=status.HTTP_201_CREATED)
@@ -49,6 +48,7 @@ class EmailVerifyView(APIView):
     def post(self, request):
         serializer = SignupEmailSerializer(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            serializer.save()
             return Response({"성공": "회원가입 완료"}, status=status.HTTP_201_CREATED)
         return Response({"detail": "회원가입 실패."}, status=status.HTTP_400_BAD_REQUEST)
 

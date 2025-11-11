@@ -3,6 +3,9 @@ from rest_framework import serializers
 import re
 from accounts.password.new_passwords import NewCreatePassword
 from accounts.utils.caches import password_clear_code, password_verify_code, signup_verify_code, signup_clear_code
+from django.db import transaction
+
+
 class SignUpSerializers(serializers.ModelSerializer):
     """
     회원가입 시리얼 라이저
@@ -61,8 +64,18 @@ class SignupEmailSerializer(serializers.Serializer):
         code = attrs["code"]
         if not signup_verify_code(email, code):
             raise serializers.ValidationError("인증번호가 틀렸거나 만료되었습니다.")
-        signup_clear_code(email)
+        
         return attrs
+    
+    # 활성화 및 인증코드 삭제
+    def save(self, **kwargs):
+        email = self.validated_data["email"]
+        User = get_user_model()
+
+        with transaction.atomic():
+            user = User.objects.select_for_update().get(email=email)
+            activated = user.activate()
+            signup_clear_code(email)
 
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()

@@ -3,11 +3,12 @@ from .models import Post
 
 class PostSerializer(serializers.ModelSerializer):
     author_nickname = serializers.SerializerMethodField()
+    view_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
         fields = "__all__"
-        read_only_fields = ["created_at", "updated_at", "author_nickname", "author"]
+        read_only_fields = ["created_at", "updated_at", "author_nickname", "author", "view_count"]
 
     def create(self, validated_data):
         user = self.context.get('request').user
@@ -15,7 +16,10 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_author_nickname(self, obj):
         return obj.author.nickname if obj.author else None
-
+    
+    def get_view_count(self, obj):
+        return getattr(obj, "view_count", 0)
+    
     def update(self, instance, validated_data):
         user = self.context.get('request').user
         if user != instance.author:
